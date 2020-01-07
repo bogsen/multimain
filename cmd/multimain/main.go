@@ -31,7 +31,7 @@ import (
 
 var generatedMultimainMapping = multimain.MappingFromMap(map[string]func(){
 {{- range .Packages }}
-	"{{ .Name }}": {{ .Name }}.Main,
+	"{{ .DirName }}": {{ .Name }}.Main,
 {{- end }}
 })
 `))
@@ -41,10 +41,12 @@ type listPackageResult struct {
 	ImportPath string
 	Name       string
 	Match      []string
+
+	DirName	   string
 }
 
 func listSubPackages() ([]*listPackageResult, *listPackageResult, error) {
-	cmd := exec.Command("go", "list", "-json", "-e", "-find", ".", "./...", "./.../...")
+	cmd := exec.Command("go", "list", "-json", "-e", "-find", ".", "./...")
 	output, err := cmd.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
@@ -81,8 +83,8 @@ itemLoop:
 
 	for i := 0; i < len(res); i++ {
 		item := res[i]
-		suffix := strings.Trim(strings.TrimPrefix(item.Dir, currentPackage.Dir), string(os.PathSeparator))
-		if strings.ContainsRune(suffix, os.PathSeparator) {
+		item.DirName = strings.Trim(strings.TrimPrefix(item.Dir, currentPackage.Dir), string(os.PathSeparator))
+		if strings.ContainsRune(item.DirName, os.PathSeparator) {
 			res = append(res[:i], res[i+1:]...)
 			i--
 		}
